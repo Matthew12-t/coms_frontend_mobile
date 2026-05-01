@@ -1,13 +1,21 @@
+import "react-native-gesture-handler";
+import "./global.css";
 import { StatusBar } from "expo-status-bar";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import HomeScreen from "./src/screens/HomeScreen";
+import RootNavigator from "./src/navigation/RootNavigator";
+import { AuthProvider } from "./src/contexts/AuthContext";
+import { PreferencesProvider } from "./src/contexts/PreferencesContext";
 
 export default function App() {
   return (
-    <SafeAreaView className="bg-slate-100 flex-1">
-      <HomeScreen />
-      <StatusBar style="auto" />
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <PreferencesProvider>
+          <RootNavigator />
+          <StatusBar style="dark" />
+        </PreferencesProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
