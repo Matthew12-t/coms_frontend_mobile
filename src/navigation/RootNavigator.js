@@ -1,18 +1,27 @@
 import { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Linking, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 
 import AuthStack from "./AuthStack";
 import MainStack from "./MainStack";
 import { useAuth } from "../hooks/useAuth";
-import { registerForPushNotifications } from "../lib/notifications";
+
+const CALLBACK_PREFIX = "coms://auth/callback";
 
 function RootNavigator() {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, verifyCallback } = useAuth();
 
   useEffect(() => {
-    if (user) registerForPushNotifications();
-  }, [user]);
+    Linking.getInitialURL().then((url) => {
+      if (url?.startsWith(CALLBACK_PREFIX)) verifyCallback(url);
+    });
+
+    const sub = Linking.addEventListener("url", ({ url }) => {
+      if (url?.startsWith(CALLBACK_PREFIX)) verifyCallback(url);
+    });
+
+    return () => sub.remove();
+  }, [verifyCallback]);
 
   if (loading) {
     return (

@@ -1,23 +1,25 @@
-import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 import { MapPin } from "lucide-react-native";
 
-function InteractiveMap({ pins, height = 220 }) {
-  const [active, setActive] = useState(pins[0]?.id ?? null);
+import { useTheme } from "../contexts/ThemeContext";
+
+const defaultMap = require("../../assets/default_maps.png");
+
+function InteractiveMap({ pins, activeId, onSelect, height = 220 }) {
+  const { colors } = useTheme();
+  const fallback = pins[0]?.id ?? null;
+  const current = activeId ?? fallback;
 
   return (
-    <View
-      className="overflow-hidden rounded-2xl bg-slate-200"
-      style={{ height }}
-    >
-      <View className="absolute inset-0 bg-slate-300/40" />
+    <View className="overflow-hidden rounded-2xl" style={{ height }}>
+      <Image source={defaultMap} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
       <View className="absolute inset-0">
         {pins.map((pin) => {
-          const isActive = pin.id === active;
+          const isActive = pin.id === current;
           return (
             <Pressable
               key={pin.id}
-              onPress={() => setActive(pin.id)}
+              onPress={() => onSelect?.(pin.id)}
               style={{
                 position: "absolute",
                 left: `${pin.x * 100}%`,
@@ -28,8 +30,8 @@ function InteractiveMap({ pins, height = 220 }) {
               <View className="items-center">
                 {isActive ? (
                   <View
-                    className="absolute -top-9 rounded-md bg-[#0B2A5B] px-2 py-1"
-                    style={{ minWidth: 80 }}
+                    className="absolute -top-9 rounded-md px-2 py-1"
+                    style={{ minWidth: 80, backgroundColor: colors.brand }}
                   >
                     <Text className="text-center text-[10px] font-semibold text-white">
                       {pin.name}
@@ -38,8 +40,8 @@ function InteractiveMap({ pins, height = 220 }) {
                 ) : null}
                 <MapPin
                   size={28}
-                  color={isActive ? "#0B2A5B" : "#F59E0B"}
-                  fill={isActive ? "#0B2A5B" : "#F59E0B"}
+                  color={isActive ? colors.brand : "#F59E0B"}
+                  fill={isActive ? colors.brand : "#F59E0B"}
                 />
               </View>
             </Pressable>

@@ -1,10 +1,15 @@
 import { Text, View } from "react-native";
 
-function StatCard({ icon, label, value, valueClass = "text-[#0B2A5B]" }) {
+import { useTheme } from "../contexts/ThemeContext";
+
+function StatCard({ icon, label, value, valueColor }) {
+  const { colors } = useTheme();
+
   return (
     <View
-      className="flex-1 rounded-2xl bg-white p-4"
+      className="flex-1 rounded-2xl p-4"
       style={{
+        backgroundColor: colors.surface,
         shadowColor: "#0B2A5B",
         shadowOpacity: 0.04,
         shadowRadius: 8,
@@ -12,13 +17,24 @@ function StatCard({ icon, label, value, valueClass = "text-[#0B2A5B]" }) {
         elevation: 1,
       }}
     >
-      <View className="mb-2 h-9 w-9 items-center justify-center rounded-full bg-slate-100">
+      <View
+        className="mb-2 h-9 w-9 items-center justify-center rounded-full"
+        style={{ backgroundColor: colors.surfaceMuted }}
+      >
         {icon}
       </View>
-      <Text className="text-[10px] font-semibold tracking-widest text-slate-400">
+      <Text
+        className="text-[10px] font-semibold tracking-widest"
+        style={{ color: colors.textMuted }}
+      >
         {label}
       </Text>
-      <Text className={`mt-1 text-xl font-bold ${valueClass}`}>{value}</Text>
+      <Text
+        className="mt-1 text-xl font-bold"
+        style={{ color: valueColor ?? colors.brand }}
+      >
+        {value}
+      </Text>
     </View>
   );
 }

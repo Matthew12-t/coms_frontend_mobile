@@ -26,8 +26,8 @@ function RegisterScreen({ navigation }) {
     setSubmitting(true);
     setError(null);
     try {
-      await register(email, password);
-      navigation?.navigate?.("Login");
+      const result = await register(email, password);
+      if (!result?.session) navigation?.navigate?.("Login");
     } catch (err) {
       setError(err.response?.data?.error || err.message);
     } finally {

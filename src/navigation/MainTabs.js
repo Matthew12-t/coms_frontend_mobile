@@ -6,6 +6,7 @@ import DashboardScreen from "../screens/DashboardScreen";
 import AnalyticsScreen from "../screens/AnalyticsScreen";
 import MapsScreen from "../screens/MapsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import { useTheme } from "../contexts/ThemeContext";
 
 const Tab = createBottomTabNavigator();
 
@@ -30,39 +31,46 @@ const TITLES = {
   ProfileTab: "Profile",
 };
 
-function TabIcon({ Icon, focused }) {
+function TabIcon({ Icon, focused, colors }) {
   return (
     <View
-      className={`h-9 w-12 items-center justify-center rounded-2xl ${
-        focused ? "bg-[#E6ECF6]" : ""
-      }`}
+      className="h-9 w-12 items-center justify-center rounded-2xl"
+      style={{ backgroundColor: focused ? colors.brandSoft : "transparent" }}
     >
-      <Icon size={20} color={focused ? "#0B2A5B" : "#94A3B8"} />
+      <Icon size={20} color={focused ? colors.brand : colors.textMuted} />
     </View>
   );
 }
 
 function MainTabs({ onLogout }) {
+  const { colors } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => {
         const Icon = ICONS[route.name];
         return {
-          headerStyle: { backgroundColor: "#F5F6FA", elevation: 0, shadowOpacity: 0 },
-          headerTitleStyle: { color: "#0F172A", fontWeight: "700" },
+          headerStyle: {
+            backgroundColor: colors.background,
+            elevation: 0,
+            shadowOpacity: 0,
+          },
+          headerTitleStyle: { color: colors.textPrimary, fontWeight: "700" },
           headerTitle: TITLES[route.name],
-          tabBarIcon: ({ focused }) => <TabIcon Icon={Icon} focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon Icon={Icon} focused={focused} colors={colors} />
+          ),
           tabBarLabel: LABELS[route.name],
           tabBarLabelStyle: {
             fontSize: 11,
             fontWeight: "600",
             marginTop: -2,
           },
-          tabBarActiveTintColor: "#0B2A5B",
-          tabBarInactiveTintColor: "#94A3B8",
+          tabBarActiveTintColor: colors.brand,
+          tabBarInactiveTintColor: colors.textMuted,
           tabBarStyle: {
-            backgroundColor: "#FFFFFF",
-            borderTopColor: "#E2E8F0",
+            backgroundColor: colors.surface,
+            borderTopColor: colors.border,
             height: 64,
             paddingTop: 6,
             paddingBottom: 8,

@@ -1,6 +1,5 @@
 import { ScrollView, Text, View } from "react-native";
 
-import NotifyMeButton from "../components/NotifyMeButton";
 import MenuList from "../components/MenuList";
 import { useFetch } from "../hooks/useFetch";
 import { fetchCanteen, fetchCanteenHistory } from "../services/canteenService";
@@ -62,9 +61,6 @@ function CanteenDetailScreen({ route }) {
           </View>
         </View>
 
-        <View className="mt-5">
-          <NotifyMeButton canteenId={canteen.id} canteenName={canteen.name} />
-        </View>
       </View>
 
       <View className="mt-5 rounded-3xl bg-white p-5">

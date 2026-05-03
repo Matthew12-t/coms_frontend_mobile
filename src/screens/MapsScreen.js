@@ -1,131 +1,311 @@
-import { useState } from "react";
-import { Image, ScrollView, Text, TextInput, View } from "react-native";
-import { Search, Info } from "lucide-react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Image, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Search, MapPin, X } from "lucide-react-native";
 
-import InteractiveMap from "../components/InteractiveMap";
 import StatusPill from "../components/StatusPill";
 import PeakHistogram from "../components/PeakHistogram";
-import PrimaryButton from "../components/PrimaryButton";
-import { mapPins, canteenDetail } from "../lib/mockData";
+import { mapPins, canteenDetails } from "../lib/mockData";
+import { fetchCanteens, fetchCanteenHistory } from "../services/canteenService";
+import { useTheme } from "../contexts/ThemeContext";
+
+const CANTEEN_IMAGES = {
+  borju: require("../../assets/kantin_borju_image.png"),
+  sipil: require("../../assets/kantin_sipil_image.png"),
+  gku: require("../../assets/kantin_gkutimur_image.png"),
+};
+
+const CANTEEN_MAP_IMAGES = {
+  borju: require("../../assets/kantin_borju_map.png"),
+  sipil: require("../../assets/kantin_sipil_map.png"),
+  gku: require("../../assets/kantin_gkutimur_map.png"),
+};
+
+const MENU_IMAGES = [
+  require("../../assets/menu1.png"),
+  require("../../assets/menu2.png"),
+  require("../../assets/menu3.png"),
+];
+
+const calcMins = (people) => Math.max(1, Math.round(people / 1.5));
+
+const deriveStatus = (density) => {
+  if (density < 0.3) return { statusTone: "success", status: "Low Flow" };
+  if (density < 0.7) return { statusTone: "neutral", status: "Moderate" };
+  return { statusTone: "danger", status: "Peak Flow" };
+};
+
+function MenuImageModal({ visible, image, label, onClose }) {
+  return (
+    <Modal transparent animationType="fade" visible={visible} onRequestClose={onClose}>
+      <Pressable
+        onPress={onClose}
+        className="flex-1 items-center justify-center px-6"
+        style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+      >
+        <Pressable onPress={() => {}} className="w-full overflow-hidden rounded-2xl bg-white">
+          <Image source={image} style={{ width: "100%", height: 300 }} resizeMode="contain" />
+          <View className="flex-row items-center justify-between px-4 py-3">
+            <Text className="text-sm font-semibold text-slate-700">{label}</Text>
+            <Pressable
+              onPress={onClose}
+              className="h-7 w-7 items-center justify-center rounded-full bg-slate-100"
+            >
+              <X size={14} color="#64748B" />
+            </Pressable>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
 
 function MapsScreen() {
+  const { colors } = useTheme();
   const [query, setQuery] = useState("");
-  const [notified, setNotified] = useState(false);
+  const [activeId, setActiveId] = useState("borju");
+  const [menuPopup, setMenuPopup] = useState(null);
+  const [liveData, setLiveData] = useState(null);
+  const [searchBarH, setSearchBarH] = useState(48);
+
+  useEffect(() => {
+    if (activeId !== "borju") {
+      setLiveData(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const canteens = await fetchCanteens();
+        const borju = canteens.find((c) => c.name === "Kantin Borju");
+        if (!borju || cancelled) return;
+        const history = await fetchCanteenHistory(borju.id, 5);
+        if (cancelled) return;
+        const latest = history?.[0];
+        const headCount = latest?.head_count ?? 0;
+        const density = borju.capacity_max ? headCount / borju.capacity_max : 0;
+        const histogram = history.map((h) => h.head_count ?? 0).reverse();
+        setLiveData({
+          inLine: headCount,
+          waitMins: calcMins(headCount),
+          histogram: histogram.length > 0 ? histogram : [0],
+          histogramActive: Math.max(0, histogram.length - 1),
+          ...deriveStatus(density),
+        });
+      } catch {
+        if (!cancelled) setLiveData(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeId]);
+
+  const filteredPins = useMemo(() => {
+    if (!query.trim()) return mapPins;
+    const q = query.toLowerCase();
+    return mapPins.filter((p) => p.name.toLowerCase().includes(q));
+  }, [query]);
+
+  const showDropdown = query.trim().length > 0 && filteredPins.length > 0;
+
+  const handleSelect = (id) => {
+    setActiveId(id);
+    setQuery("");
+  };
+
+  const base = canteenDetails[activeId] ?? canteenDetails.borju;
+  const detail = activeId === "borju" && liveData ? { ...base, ...liveData } : base;
 
   return (
-    <ScrollView
-      className="flex-1 bg-[#F5F6FA]"
-      contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <View className="mt-3 flex-row items-center rounded-full bg-white px-4 py-3">
-        <Search size={16} color="#94A3B8" />
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search canteen..."
-          placeholderTextColor="#94A3B8"
-          className="ml-2 flex-1 text-sm text-slate-700"
-        />
-      </View>
-
-      <View
-        className="mt-4 rounded-2xl bg-white p-4"
-        style={{
-          shadowColor: "#0B2A5B",
-          shadowOpacity: 0.05,
-          shadowRadius: 10,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 1,
-        }}
+    <>
+      <ScrollView
+        className="flex-1"
+        style={{ backgroundColor: colors.background }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <View className="flex-row items-center justify-between">
-          <Text className="text-base font-bold text-[#0B2A5B]">Campus Maps</Text>
-          <Info size={16} color="#94A3B8" />
-        </View>
-        <View className="mt-3">
-          <InteractiveMap pins={mapPins} />
-        </View>
-      </View>
-
-      <View className="mt-5">
-        <Text className="text-xl font-bold text-slate-800">
-          {canteenDetail.name}
-        </Text>
-        <View className="mt-3 flex-row">
-          <View className="flex-1">
-            <Text className="text-xs text-slate-400">Location</Text>
-            <Text className="mt-1 text-sm font-semibold text-slate-700">
-              {canteenDetail.location}
-            </Text>
+        <View style={{ zIndex: 100, marginTop: 12 }}>
+          <View
+            className="flex-row items-center rounded-full px-4 py-3"
+            style={{ backgroundColor: colors.surface }}
+            onLayout={(e) => setSearchBarH(e.nativeEvent.layout.height)}
+          >
+            <Search size={16} color={colors.textMuted} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search canteen..."
+              placeholderTextColor={colors.textMuted}
+              className="ml-2 flex-1 text-sm"
+              style={{ color: colors.textPrimary }}
+            />
+            {query.length > 0 ? (
+              <Pressable onPress={() => setQuery("")}>
+                <X size={16} color={colors.textMuted} />
+              </Pressable>
+            ) : null}
           </View>
-          <View className="flex-1 items-end">
-            <Text className="text-xs text-slate-400">Operational hours</Text>
-            <Text className="mt-1 text-sm font-semibold text-slate-700">
-              {canteenDetail.hours}
-            </Text>
-          </View>
-        </View>
-      </View>
 
-      <View
-        className="mt-4 h-40 overflow-hidden rounded-2xl bg-slate-200"
-      >
-        <View className="absolute inset-0 items-center justify-center">
-          <Text className="text-xs text-slate-500">[Canteen photo]</Text>
-        </View>
-      </View>
-
-      <View className="mt-5 flex-row items-center justify-between">
-        <View className="flex-row items-baseline">
-          <Text className="text-3xl font-bold text-emerald-600">
-            {canteenDetail.inLine}
-          </Text>
-          <Text className="ml-2 text-sm text-slate-500">People in line</Text>
-        </View>
-        <StatusPill tone="success">{canteenDetail.status}</StatusPill>
-      </View>
-
-      <View className="mt-5">
-        <View className="flex-row items-center justify-between">
-          <Text className="text-sm font-semibold text-slate-700">Wait Time</Text>
-          <Text className="text-sm font-semibold text-slate-700">
-            ~{canteenDetail.waitMins} mins
-          </Text>
-        </View>
-        <View className="mt-3">
-          <PeakHistogram
-            values={canteenDetail.waitChart}
-            activeIndex={canteenDetail.waitActive}
-            height={50}
-          />
-        </View>
-      </View>
-
-      <View className="mt-6">
-        <Text className="text-base font-semibold text-slate-800">Menu</Text>
-        <View className="mt-3 flex-row gap-3">
-          {canteenDetail.menus.map((menu) => (
+          {showDropdown ? (
             <View
-              key={menu}
-              className="flex-1 h-32 items-center justify-center overflow-hidden rounded-2xl bg-slate-100"
+              className="absolute left-0 right-0 overflow-hidden rounded-2xl"
+              style={{
+                top: searchBarH + 6,
+                backgroundColor: colors.surface,
+                elevation: 10,
+                shadowColor: "#000",
+                shadowOpacity: 0.12,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 4 },
+                zIndex: 200,
+              }}
             >
-              <Text className="text-[10px] uppercase tracking-widest text-slate-400">
-                {menu.replace(/_/g, " ")}
+              {filteredPins.map((pin, index) => (
+                <Pressable
+                  key={pin.id}
+                  onPress={() => handleSelect(pin.id)}
+                  className="flex-row items-center px-4 py-3"
+                  style={
+                    index < filteredPins.length - 1
+                      ? { borderBottomWidth: 1, borderBottomColor: colors.border }
+                      : undefined
+                  }
+                >
+                  <MapPin size={14} color={colors.brand} />
+                  <Text
+                    className="ml-2 text-sm font-medium"
+                    style={{ color: colors.textPrimary }}
+                  >
+                    {pin.name}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
+        </View>
+
+        <View className="mt-4 overflow-hidden rounded-2xl" style={{ height: 220 }}>
+          <Image
+            source={CANTEEN_MAP_IMAGES[activeId]}
+            style={{ width: "100%", height: "100%" }}
+            resizeMode="cover"
+          />
+          <View
+            className="absolute top-3 left-3 rounded-full px-3 py-1"
+            style={{ backgroundColor: "rgba(255,255,255,0.92)" }}
+          >
+            <Text className="text-[11px] font-semibold" style={{ color: colors.brand }}>
+              {detail.name}
+            </Text>
+          </View>
+        </View>
+
+        <View className="mt-5">
+          <Text className="text-xl font-bold" style={{ color: colors.textPrimary }}>
+            {detail.name}
+          </Text>
+          <View className="mt-3 flex-row">
+            <View className="flex-1">
+              <Text className="text-xs" style={{ color: colors.textMuted }}>
+                Location
+              </Text>
+              <Text
+                className="mt-1 text-sm font-semibold"
+                style={{ color: colors.textSecondary }}
+              >
+                {detail.location}
               </Text>
             </View>
-          ))}
+            <View className="flex-1 items-end">
+              <Text className="text-xs" style={{ color: colors.textMuted }}>
+                Operational hours
+              </Text>
+              <Text
+                className="mt-1 text-sm font-semibold"
+                style={{ color: colors.textSecondary }}
+              >
+                {detail.hours}
+              </Text>
+            </View>
+          </View>
         </View>
-      </View>
 
-      <View className="mt-6">
-        <PrimaryButton
-          label={notified ? "We'll notify you" : "Notify Me"}
-          variant={notified ? "ghost" : "outline"}
-          onPress={() => setNotified((v) => !v)}
+        <View className="mt-4 h-40 overflow-hidden rounded-2xl">
+          <Image
+            source={CANTEEN_IMAGES[activeId]}
+            style={{ width: "100%", height: "100%" }}
+            resizeMode="cover"
+          />
+        </View>
+
+        <View className="mt-5 flex-row items-center justify-between">
+          <View className="flex-row items-baseline">
+            <Text className="text-3xl font-bold text-emerald-600">{detail.inLine}</Text>
+            <Text className="ml-2 text-sm" style={{ color: colors.textSecondary }}>
+              People in line
+            </Text>
+          </View>
+          <StatusPill tone={detail.statusTone}>{detail.status}</StatusPill>
+        </View>
+
+        <View className="mt-5">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>
+              Wait Time
+            </Text>
+            <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>
+              ~{detail.waitMins} mins
+            </Text>
+          </View>
+          <View className="mt-3">
+            <PeakHistogram
+              values={detail.histogram}
+              activeIndex={detail.histogramActive}
+              height={50}
+            />
+          </View>
+        </View>
+
+        <View className="mt-6">
+          <Text className="text-base font-semibold" style={{ color: colors.textPrimary }}>
+            Menu
+          </Text>
+          <View className="mt-3 flex-row gap-3">
+            {detail.menus.map((menu, i) => (
+              <Pressable
+                key={menu}
+                onPress={() => setMenuPopup(i)}
+                className="flex-1 h-32 overflow-hidden rounded-2xl"
+              >
+                <Image
+                  source={MENU_IMAGES[i]}
+                  style={{ width: "100%", height: "100%" }}
+                  resizeMode="cover"
+                />
+                <View
+                  className="absolute inset-0 items-end justify-center pb-2"
+                  style={{ backgroundColor: "rgba(0,0,0,0.25)" }}
+                >
+                  <Text className="w-full text-center text-[9px] font-semibold uppercase tracking-widest text-white">
+                    {menu}
+                  </Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+
+      {menuPopup !== null ? (
+        <MenuImageModal
+          visible
+          image={MENU_IMAGES[menuPopup]}
+          label={detail.menus[menuPopup]}
+          onClose={() => setMenuPopup(null)}
         />
-      </View>
-    </ScrollView>
+      ) : null}
+    </>
   );
 }
 

@@ -10,15 +10,7 @@ import {
 } from "react-native";
 
 import PrimaryButton from "../components/PrimaryButton";
-import SocialIconButton from "../components/SocialIconButton";
 import { useAuth } from "../hooks/useAuth";
-
-const SOCIALS = [
-  { id: "twitter", label: "𝕏", color: "#1D9BF0" },
-  { id: "google", label: "G", color: "#DB4437" },
-  { id: "apple", label: "A", color: "#0F172A" },
-  { id: "facebook", label: "f", color: "#1877F2" },
-];
 
 function LoginScreen({ onAuthenticated, navigation }) {
   const { login } = useAuth();
@@ -102,18 +94,6 @@ function LoginScreen({ onAuthenticated, navigation }) {
               label={submitting ? "Logging in..." : "Login"}
               onPress={handleLogin}
             />
-          </View>
-
-          <View className="mt-8 flex-row items-center">
-            <View className="h-px flex-1 bg-slate-200" />
-            <Text className="mx-3 text-xs text-slate-500">Login with</Text>
-            <View className="h-px flex-1 bg-slate-200" />
-          </View>
-
-          <View className="mt-5 flex-row justify-center gap-4">
-            {SOCIALS.map((s) => (
-              <SocialIconButton key={s.id} label={s.label} color={s.color} />
-            ))}
           </View>
 
           <View className="mt-8 flex-row justify-center">

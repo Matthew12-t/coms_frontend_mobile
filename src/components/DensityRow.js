@@ -1,31 +1,33 @@
 import { Text, View } from "react-native";
 
+import { useTheme } from "../contexts/ThemeContext";
+
 function DensityRow({ day, percent, tone = "navy" }) {
-  const trackColor =
-    tone === "success" ? "bg-emerald-400" : "bg-[#0B2A5B]";
+  const { colors } = useTheme();
+  const trackColor = tone === "success" ? "#34D399" : colors.brand;
+  const labelColor =
+    tone === "success" ? "#059669" : colors.textSecondary;
 
   return (
     <View className="mb-3">
       <View className="flex-row items-center justify-between">
         <Text
-          className={`text-sm ${
-            tone === "success" ? "text-emerald-600 font-semibold" : "text-slate-700"
-          }`}
+          className="text-sm"
+          style={{ color: labelColor, fontWeight: tone === "success" ? "600" : "400" }}
         >
           {day}
         </Text>
-        <Text
-          className={`text-sm font-semibold ${
-            tone === "success" ? "text-emerald-600" : "text-slate-700"
-          }`}
-        >
+        <Text className="text-sm font-semibold" style={{ color: labelColor }}>
           {percent}%
         </Text>
       </View>
-      <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
+      <View
+        className="mt-1.5 h-2 overflow-hidden rounded-full"
+        style={{ backgroundColor: colors.surfaceMuted }}
+      >
         <View
-          className={`h-full rounded-full ${trackColor}`}
-          style={{ width: `${percent}%` }}
+          className="h-full rounded-full"
+          style={{ width: `${percent}%`, backgroundColor: trackColor }}
         />
       </View>
     </View>

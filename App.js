@@ -6,16 +6,27 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import RootNavigator from "./src/navigation/RootNavigator";
 import { AuthProvider } from "./src/contexts/AuthContext";
 import { PreferencesProvider } from "./src/contexts/PreferencesContext";
+import { ThemeProvider, useTheme } from "./src/contexts/ThemeContext";
+import { LanguageProvider } from "./src/contexts/LanguageContext";
+
+function ThemedStatusBar() {
+  const { theme } = useTheme();
+  return <StatusBar style={theme === "dark" ? "light" : "dark"} />;
+}
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <PreferencesProvider>
-          <RootNavigator />
-          <StatusBar style="dark" />
-        </PreferencesProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <PreferencesProvider>
+              <RootNavigator />
+              <ThemedStatusBar />
+            </PreferencesProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

@@ -1,18 +1,26 @@
 import { Dimensions, Text, View } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 
+import { useTheme } from "../contexts/ThemeContext";
+
 const screenWidth = Dimensions.get("window").width;
 
 function PeakLineChart({ data, peakIndex }) {
+  const { colors, theme } = useTheme();
+  const surfaceHex = theme === "dark" ? "#1E293B" : "#FFFFFF";
+
   const chartConfig = {
-    backgroundGradientFrom: "#FFFFFF",
-    backgroundGradientTo: "#FFFFFF",
+    backgroundGradientFrom: surfaceHex,
+    backgroundGradientTo: surfaceHex,
     decimalPlaces: 0,
-    color: () => "#0B2A5B",
-    labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
+    color: () => colors.brand,
+    labelColor: (opacity = 1) =>
+      theme === "dark"
+        ? `rgba(203, 213, 225, ${opacity})`
+        : `rgba(100, 116, 139, ${opacity})`,
     propsForDots: { r: "0" },
     propsForBackgroundLines: { stroke: "transparent" },
-    fillShadowGradient: "#0B2A5B",
+    fillShadowGradient: colors.brand,
     fillShadowGradientOpacity: 0.08,
   };
 
@@ -50,19 +58,17 @@ function PeakLineChart({ data, peakIndex }) {
               <View className="rounded-full bg-rose-500 px-2.5 py-1">
                 <Text className="text-[10px] font-bold text-white">PEAK</Text>
               </View>
-              <View
-                className="mt-1 h-2 w-2 rounded-full bg-rose-500"
-              />
+              <View className="mt-1 h-2 w-2 rounded-full bg-rose-500" />
             </View>
           );
         }}
       />
-      <Text className="mt-1 text-center text-xs text-slate-500">
-        Traffic typically surges between{" "}
-        <Text className="font-semibold text-[#0B2A5B]">
-          {peakLabel} - 01:00 PM
+      <Text className="mt-1 text-center text-xs" style={{ color: colors.textSecondary }}>
+        Peak around{" "}
+        <Text className="font-semibold" style={{ color: colors.brand }}>
+          {peakLabel}
         </Text>{" "}
-        during lunch breaks.
+        ({peakValue} people)
       </Text>
     </View>
   );

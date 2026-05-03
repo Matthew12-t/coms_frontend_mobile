@@ -1,12 +1,13 @@
 import { Text, View } from "react-native";
-import { Users, MapPin } from "lucide-react-native";
+import { Users, MapPin, Clock } from "lucide-react-native";
 
 import StatusPill from "./StatusPill";
 
-function BestChoiceCard({ canteen }) {
+function BestChoiceCard({ canteen, people, mins }) {
   if (!canteen) return null;
 
   const { name, location, capacity_max } = canteen;
+  const hasLive = people != null;
 
   return (
     <View className="rounded-2xl bg-[#0B2A5B] p-5">
@@ -38,16 +39,26 @@ function BestChoiceCard({ canteen }) {
           </View>
           <View className="ml-3">
             <Text className="text-[10px] font-semibold tracking-widest text-white/70">
-              CAPACITY
+              {hasLive ? "IN LINE" : "CAPACITY"}
             </Text>
             <Text className="text-base font-semibold text-white">
-              {capacity_max} People
+              {hasLive ? `${people} People` : `${capacity_max} People`}
             </Text>
           </View>
         </View>
-        <StatusPill tone="success" dot>
-          Available
-        </StatusPill>
+
+        {hasLive ? (
+          <View className="flex-row items-center">
+            <Clock size={14} color="rgba(255,255,255,0.7)" />
+            <Text className="ml-1 text-xs font-semibold text-white/90">
+              ~{mins} mins
+            </Text>
+          </View>
+        ) : (
+          <StatusPill tone="success" dot>
+            Available
+          </StatusPill>
+        )}
       </View>
     </View>
   );

@@ -1,27 +1,31 @@
 import { Pressable, Text, View } from "react-native";
 
+import { useTheme } from "../contexts/ThemeContext";
+
 function PrimaryButton({ label, onPress, icon = null, variant = "solid", className = "" }) {
-  const containerByVariant = {
-    solid: "bg-[#0B2A5B] active:bg-[#08214A]",
-    outline: "border border-[#0B2A5B] bg-white",
-    ghost: "bg-white",
-    danger: "bg-rose-100 active:bg-rose-200",
+  const { colors } = useTheme();
+
+  const variantStyles = {
+    solid:   { bg: colors.brand,        fg: "#FFFFFF",         border: null },
+    outline: { bg: colors.surface,      fg: colors.brand,      border: colors.brand },
+    ghost:   { bg: colors.surface,      fg: colors.brand,      border: null },
+    danger:  { bg: "rgba(244,63,94,0.12)", fg: "#DC2626",      border: null },
   };
 
-  const labelByVariant = {
-    solid: "text-white",
-    outline: "text-[#0B2A5B]",
-    ghost: "text-[#0B2A5B]",
-    danger: "text-rose-600",
-  };
+  const v = variantStyles[variant] ?? variantStyles.solid;
 
   return (
     <Pressable
       onPress={onPress}
-      className={`w-full flex-row items-center justify-center rounded-2xl py-4 ${containerByVariant[variant]} ${className}`}
+      className={`w-full flex-row items-center justify-center rounded-2xl py-4 ${className}`}
+      style={{
+        backgroundColor: v.bg,
+        borderWidth: v.border ? 1 : 0,
+        borderColor: v.border ?? "transparent",
+      }}
     >
       {icon ? <View className="mr-2">{icon}</View> : null}
-      <Text className={`text-base font-semibold ${labelByVariant[variant]}`}>
+      <Text className="text-base font-semibold" style={{ color: v.fg }}>
         {label}
       </Text>
     </Pressable>
