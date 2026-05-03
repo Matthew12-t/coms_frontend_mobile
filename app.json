@@ -35,16 +35,20 @@
       "edgeToEdgeEnabled": true,
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
-      ]
+        "ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "package": "com.matthew12t.coms_frontend_mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
-        "projectId": ""
+        "projectId": "dbfb1b75-64fa-42d6-98f7-5b2e5b7d4734"
       }
-    }
+    },
+    "owner": "matthew12-t"
   }
 }
