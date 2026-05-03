@@ -94,6 +94,17 @@ function DashboardScreen({ navigation }) {
   const allCards = useMemo(() => {
     let mockSeed = 0;
     return grid.map((canteen) => {
+      if (canteen.id === bestChoice?.id) {
+        return {
+          canteen,
+          tone: LIVE_CARD_CONFIG.tone,
+          caption: LIVE_CARD_CONFIG.caption,
+          histogram: LIVE_CARD_CONFIG.histogram,
+          activeIndex: LIVE_CARD_CONFIG.active,
+          mins: liveMins,
+          people: livePeople,
+        };
+      }
       const cfg = MOCK_CARD_CONFIGS[mockSeed % MOCK_CARD_CONFIGS.length];
       mockSeed += 1;
       return {
@@ -106,7 +117,7 @@ function DashboardScreen({ navigation }) {
         people: cfg.people,
       };
     });
-  }, [grid]);
+  }, [grid, bestChoice?.id, livePeople, liveMins]);
 
   const mutateFavorites = async (nextIds) => {
     if (!preferences) throw new Error("Please sign in to save favorites.");
